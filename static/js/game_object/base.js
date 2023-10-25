@@ -32,6 +32,7 @@ let GAME_OBJECTS_FRAME = (timestamp) => {
             obj.start();
             obj.has_call_start = true;
         } else {
+            obj.timedelta = timestamp - last_timestamp;
             obj.update();
         }
     }
@@ -41,3 +42,8 @@ let GAME_OBJECTS_FRAME = (timestamp) => {
 }
 
 requestAnimationFrame(GAME_OBJECTS_FRAME);
+
+
+export {
+    GameObject
+}
