@@ -27,6 +27,11 @@ class Player extends GameObject {
         this.status = 3;// 0: 静止 1：向前移动 2：向后移动 3：跳跃 4：攻击 5：被打 6：死亡
         this.frame_current_cnt = 0;
         this.animations = new Map();
+
+        this.hp = 100;
+        this.$hp = this.root.$kof.find(`.kof-head-hp-${this.id}>div`);
+        this.$hp_effect = this.$hp.find(`div`);
+
     }
 
     start() {
@@ -42,9 +47,9 @@ class Player extends GameObject {
             d = this.press.has('d');
             space = this.press.has(' ');
         } else {
-            w = this.press.has('ArrowUp');
-            a = this.press.has('ArrowLeft');
-            d = this.press.has('ArrowRight');
+            w = this.press.has('8');
+            a = this.press.has('4');
+            d = this.press.has('6');
             space = this.press.has('Enter');
         }
 
@@ -77,6 +82,16 @@ class Player extends GameObject {
         }
     }
 
+    is_collision(r1, r2) {
+        if (Math.max(r1.x1, r2.x1) > Math.min(r1.x2, r2.x2)) {
+            return false;
+        }
+        if (Math.max(r1.y1, r2.y1) > Math.min(r1.y2, r2.y2)) {
+            return false;
+        }
+        return true;
+    }
+
     update_direction() {
         if (this.status === 6) return;
 
@@ -88,7 +103,42 @@ class Player extends GameObject {
         }
     }
 
-    move() {
+    update_attack() {
+        let players = this.root.Player;
+        if (this.status === 4 && this.frame_current_cnt === 18) {
+            let me = this, you = players[1 - this.id];
+            let r1;
+
+            if (this.direction > 0) {
+                r1 = {
+                    x1: me.x + 120,
+                    y1: me.y + 40,
+                    x2: me.x + 120 + 100,
+                    y2: me.y + 40 + 20
+                };
+            } else {
+                r1 = {
+                    x1: me.x - 120 - 100,
+                    y1: me.y + 40,
+                    x2: me.x + me.width - 120,
+                    y2: me.y + 40 + 20,
+                };
+            }
+
+            let r2 = {
+                x1: you.x,
+                y1: you.y,
+                x2: you.x + you.width,
+                y2: you.y + you.height,
+            }
+
+            if (this.is_collision(r1, r2)) {
+                this.is_attacked(you);
+            }
+        }
+    }
+
+    update_move() {
         this.vy += this.gravity;
 
         this.x += this.vx * this.timedelta / 1000;
@@ -108,10 +158,32 @@ class Player extends GameObject {
         }
     }
 
+    is_attacked(player) {
+        if (player.status === 6) return;
+        player.status = 5;
+        player.frame_current_cnt = 0;
+        player.hp = Math.max(0, player.hp - 10);
+
+        player.$hp_effect.animate({
+            width: player.$hp.parent().width() * player.hp / 100
+        }, 300);
+
+        player.$hp.animate({
+            width: player.$hp.parent().width() * player.hp / 100
+        }, 600);
+
+        if (player.hp <= 0) {
+            this.frame_current_cnt = 0;
+            this.vx = 0;
+            player.status = 6;
+        }
+    }
+
     update() {
         this.update_status();
         this.update_direction();
-        this.move();
+        this.update_attack();
+        this.update_move();
 
         this.render();
     }

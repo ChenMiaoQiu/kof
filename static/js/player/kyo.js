@@ -31,6 +31,10 @@ class Kyo extends Player {
                 if (i === 3) {
                     obj.frame_rate = 6;
                 }
+
+                // if (i === 5) {
+                //     obj.frame_rate = 7;
+                // }
             }
         }
     }
